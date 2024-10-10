@@ -1,0 +1,56 @@
+version: "3"
+services:
+  db_repl:
+    build: ./db_repl
+    container_name: "${DB_REPL_HOST}"
+    image: db_repl_image
+    environment:
+      - DB_REPL_PORT=${DB_REPL_PORT}
+      - DB_REPL_PASSWORD=${DB_REPL_PASSWORD}
+      - DB_REPL_USER=${DB_REPL_USER}
+      - DB_HOST=${DB_HOST}.my_network
+      - DB_PORT=${DB_PORT}
+      - DB_REPL_HOST=${DB_REPL_HOST}
+
+  bot:
+    build:
+      context: ./bot
+    image: bot_image
+    environment:
+      - DB_HOST=${DB_HOST}
+      - TOKEN=${TOKEN}
+      - RM_PORT=${RM_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - RM_PASSWORD=${RM_PASSWORD}
+      - RM_HOST=${RM_HOST}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - RM_USER=${RM_USER}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+    volumes:
+      - pg_logs:/var/log/
+    container_name: "${BOT}"
+
+  db:
+    image: db_image
+    build: ./db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - DB_REPL_USER=${DB_REPL_USER}
+      - DB_REPL_HOST=${DB_REPL_HOST}.my_network
+      - DB_REPL_PASSWORD=${DB_REPL_PASSWORD}
+    volumes:
+      - pg_logs:/var/log/
+    container_name: "${DB_HOST}"
+
+volumes:
+  pg_logs:
+  pg_data:
+
+networks:
+  default:
+    external: true
+    name: my_network

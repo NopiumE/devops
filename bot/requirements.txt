@@ -1,0 +1,9 @@
+python-telegram-bot==13.7
+urllib3==1.26.15
+requests-toolbelt==0.10.1
+psycopg2-binary
+python-dotenv
+paramiko
+requests
+Requests
+docker

@@ -1,0 +1,19 @@
+
+CREATE DATABASE ${DB_DATABASE};
+
+CREATE USER repl_user REPLICATION LOGIN PASSWORD '${DB_REPL_PASSWORD}';
+
+\c test;
+
+CREATE TABLE IF NOT EXISTS phone (
+    id SERIAL PRIMARY KEY,
+    phone_number VARCHAR(18) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS emails (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(50) NOT NULL
+);
+
+INSERT INTO emails (email) VALUES ('satyaev@mail.com');
+INSERT INTO phone (phone_number) VALUES ('88005553535');
