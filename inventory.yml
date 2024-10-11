@@ -1,0 +1,34 @@
+all:
+  children:
+    db_servers:
+      hosts:
+        DB:
+          ansible_host: 192.168.174.194
+          ansible_user: ansible
+          ansible_password: 1
+        DB_repl:
+          ansible_host: 192.168.174.193
+          ansible_user: ansible
+          ansible_password: 1
+    TG_Bot:
+      hosts:
+        TG_Bot:
+          ansible_host: 192.168.174.192
+          ansible_user: ansible
+          ansible_password: 1
+          
+  vars:
+    TOKEN: '7325372734:AAGijm1aoCUKtlYr0qkeeIYntMNHOqxvdS8'
+    RM_HOST: '192.168.174.194'
+    RM_PORT: '22'
+    RM_USER: 'ansible'
+    RM_PASSWORD: '1'
+    DB_HOST: '192.168.174.194'
+    DB_REPL_HOST: '192.168.174.193'
+    DB_PORT: '5432'
+    DB_DATABASE: 'test'
+    DB_REPL_USER: 'repl_user'
+    DB_REPL_PASSWORD: '1'
+    DB_REPL_PORT: '5432'
+    DB_USER: 'postgres'
+    DB_PASSWORD: '1'
