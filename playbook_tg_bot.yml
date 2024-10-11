@@ -1,132 +1,132 @@
-- name: Deploy TG Bot
+- name: deplot bot
   hosts: TG
   become: yes
   vars:
-    tg_bot_repo: "https://github.com/NopiumE/devops.git"
-    repo_dir: "/tg_bot"
-    tg_bot_dir: "{{ repo_dir }}/bot"
+    tg_repo: "https://github.com/NopiumE/devops.git"
+    repo_dir: "/tg"
+    tg_dir: "{{ repo_dir }}/bot"
   tasks:
-    - name: Install dependencies
+    - name: inst packages
       apt:
         name:
-          - git
           - python3
           - python3-pip
+          - git
         state: present
         update_cache: yes
 
-    - name: Clone TG bot repository
+    - name: download bot
       git:
-        repo: "{{ tg_bot_repo }}"
+        repo: "{{ tg_repo }}"
         dest: "{{ repo_dir }}"
         version: devops
 
-    - name: Install Python dependencies from requirements.txt
+    - name: pckg for python
       pip:
-        requirements: "{{ tg_bot_dir }}/requirements.txt"
+        requirements: "{{ tg_dir }}/requirements.txt"
 
-    - name: Create .env file with variables from inventory
+    - name: config .env for bot
       copy:
-        dest: "{{ tg_bot_dir }}/.env"
+        dest: "{{ tg_dir }}/.env"
         content: |
           TOKEN={{ hostvars[inventory_hostname]['TOKEN'] }}
+          RM_PASSWORD={{ hostvars[inventory_hostname]['RM_PASSWORD'] }}
+          RM_HOST={{ hostvars[inventory_hostname]['RM_HOST'] }}
+          RM_PORT={{ hostvars[inventory_hostname]['RM_PORT'] }}
+          RM_USER={{ hostvars[inventory_hostname]['RM_USER'] }}
           DB_HOST={{ hostvars[inventory_hostname]['DB_HOST'] }}
           DB_PORT={{ hostvars[inventory_hostname]['DB_PORT'] }}
           DB_USER={{ hostvars[inventory_hostname]['DB_USER'] }}
           DB_PASSWORD={{ hostvars[inventory_hostname]['DB_PASSWORD'] }}
           DB_DATABASE={{ hostvars[inventory_hostname]['DB_DATABASE'] }}
-          RM_HOST={{ hostvars[inventory_hostname]['RM_HOST'] }}
-          RM_PORT={{ hostvars[inventory_hostname]['RM_PORT'] }}
-          RM_USER={{ hostvars[inventory_hostname]['RM_USER'] }}
-          RM_PASSWORD={{ hostvars[inventory_hostname]['RM_PASSWORD'] }}
 
-    - name: Create systemd service file for TG bot
+    - name: create service for bot
       copy:
-        dest: /etc/systemd/system/tg_bot.service
+        dest: /etc/systemd/system/tg.service
         content: |
           [Unit]
-          Description=TG Bot
+          Description=TG
           After=network.target
 
           [Service]
           User=root
-          WorkingDirectory={{ tg_bot_dir }}
-          EnvironmentFile={{ tg_bot_dir }}/.env
-          ExecStart=/usr/bin/python3 {{ tg_bot_dir }}/bot.py
+          WorkingDirectory={{ tg_dir }}
+          EnvironmentFile={{ tg_dir }}/.env
+          ExecStart=/usr/bin/python3 {{ tg_dir }}/bot.py
           Restart=always
 
           [Install]
           WantedBy=multi-user.target
 
-    - name: Start and enable TG bot service
+    - name: start bot
       systemd:
-        name: tg_bot
+        name: tg
         state: started
         enabled: yes
 
-- name: TASKS FOR DB_Servers
-  hosts: db_servers
+- name: for db_hosts
+  hosts: db_hosts
   become: yes
   tasks:
     - name: apt update&upgrade packages
       apt:
         update_cache: yes
         upgrade: dist
-        cache_valid_time: 120000
+        cache_valid_time: 100000
 
-    - name: Adding apt repository key of PostgreSQL
+    - name: key for psql
       apt_key:
         url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
         state: present
 
-    - name: Adding apt repository of PostgreSQL
+    - name: rep for psql
       apt_repository:
         repo: "deb http://apt.postgresql.org/pub/repos/apt/ jammy-pgdg main"
         state: present
         filename: "PostgreSQL_repo"
 
-    - name: Install packages for PostgreSQL
+    - name: pckgs for psql
       apt:
         name:
           - postgresql-15
           - postgresql-contrib
         state: present
 
-    - name: Install pip3
+    - name: pip3
       apt:
         name: python3-pip
         state: present
     
-    - name: Install psycopg2-binary
+    - name: psycopg2
       pip:
         name: psycopg2-binary
         state: present
 
-    - name: Is PostgreSQL installed?
+    - name: check if psql doesn't downloaded
       command: "psql --version"
       ignore_errors: yes
       register: psql_version
 
-    - name: Fail if PostgreSQL is not installed
+    - name: error if not installed
       fail:
         msg: "PostgreSQL has not been installed"
       when: psql_version.failed
 
-    - name: Get PostgreSQL cluster status
+    - name: cluster stat
       command: pg_ctlcluster 15 main status
       ignore_errors: yes
       register: postgres_status
 
-    - name: If PostgreSQL cluster isn't running then start it
+    - name: started cluster if not
       command: pg_ctlcluster 15 main start
       when: postgres_status is defined and postgres_status.stdout.find('is not running') != -1
 
-- name: Main DB_Server Configuration
+- name: main db config
   hosts: DB
   become: yes
   tasks:
 
-    - name: Create archive directory for PostgreSQL
+    - name: create dirs
       file:
         path: /oracle/pg_data/archive/
         state: directory
@@ -135,7 +135,7 @@
         mode: '0755'
         recurse: yes
         
-    - name: pg_hba.conf Configuration
+    - name: pg_hba.conf
       blockinfile:
         create: true
         path: /etc/postgresql/15/main/pg_hba.conf
@@ -144,7 +144,7 @@
           host all all "{{ hostvars[inventory_hostname]['DB_HOST'] }}"/24 trust
           host replication {{ hostvars[inventory_hostname]['DB_REPL_USER'] }} {{ hostvars[inventory_hostname]['DB_REPL_HOST'] }}/24 trust
 
-    - name: postgresql.conf Configuration
+    - name: postgresql.conf
       blockinfile:
         create: true
         path: /etc/postgresql/15/main/postgresql.conf
@@ -163,12 +163,12 @@
           wal_log_hints = on
           log_replication_commands = on
 
-    - name: Restart PostgreSQL service
+    - name: restart main db
       service:
         name: postgresql
         state: restarted
 
-    - name: Database creation
+    - name: create db
       community.general.postgresql_db:
         name: "{{ hostvars[inventory_hostname]['DB_DATABASE'] }}"
         encoding: UTF-8
@@ -176,26 +176,26 @@
       become: yes
       become_user: postgres
 
-    - name: Create tables for emails and phone numbers
+    - name: create tables
       shell: |
         psql -d {{ hostvars[inventory_hostname]['DB_DATABASE'] }} -c "CREATE TABLE IF NOT EXISTS emails (id serial PRIMARY KEY, email text);"
         psql -d {{ hostvars[inventory_hostname]['DB_DATABASE'] }} -c "CREATE TABLE IF NOT EXISTS numbers (id serial PRIMARY KEY, phone_number text);"
       become_user: postgres
       ignore_errors: true
 
-    - name: Change password for postgres user
+    - name: Change passwd for postgresql
       command: psql -c "ALTER USER {{ hostvars[inventory_hostname]['DB_USER'] }} WITH PASSWORD '{{ hostvars[inventory_hostname]['DB_PASSWORD'] }}';"
       become_user: postgres
 
-    - name: Create user for replication
+    - name: user for repl
       command: psql -c "DO $$ BEGIN CREATE ROLE {{ hostvars[inventory_hostname]['DB_REPL_USER'] }} REPLICATION LOGIN SUPERUSER PASSWORD '{{ hostvars[inventory_hostname]['DB_REPL_PASSWORD'] }}'; EXCEPTION WHEN duplicate_object THEN NULL; END $$;"
       become_user: postgres
 
-- name: Replication Server Configuration
+- name: repl config
   hosts: DB_repl
   become: yes
   tasks:
-    - name: Is PostgreSQL running?
+    - name: check if run
       ansible.builtin.command:
         cmd: "pg_ctlcluster 15 main status"
       register: postgres_status
@@ -203,14 +203,14 @@
       become: yes
       become_user: root
 
-    - name: If PostgreSQL cluster doesn't exist then create it
+    - name: create cluster if not
       ansible.builtin.command:
         cmd: "pg_createcluster 15 main"
       when: postgres_status.stdout.find('specified cluster \'15 main\' does not exist') != -1
       become: yes
       become_user: root
 
-    - name: Setup postgresql.conf
+    - name: postgresql.conf
       blockinfile:
         create: true
         path: /etc/postgresql/15/main/postgresql.conf

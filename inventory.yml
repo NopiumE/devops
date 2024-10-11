@@ -1,6 +1,6 @@
 all:
   children:
-    db_servers:
+    db_hosts:
       hosts:
         DB:
           ansible_host: 192.168.174.194
@@ -10,9 +10,9 @@ all:
           ansible_host: 192.168.174.193
           ansible_user: ansible
           ansible_password: 1
-    TG_Bot:
+    TG:
       hosts:
-        TG_Bot:
+        TG:
           ansible_host: 192.168.174.192
           ansible_user: ansible
           ansible_password: 1
