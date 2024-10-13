@@ -8,9 +8,12 @@ services:
       - DB_REPL_PORT=${DB_REPL_PORT}
       - DB_REPL_PASSWORD=${DB_REPL_PASSWORD}
       - DB_REPL_USER=${DB_REPL_USER}
-      - DB_HOST=${DB_HOST}.my_network
+      - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
       - DB_REPL_HOST=${DB_REPL_HOST}
+    networks:
+      my_static_network:
+        ipv4_address: 172.28.0.2
 
   bot:
     build:
@@ -30,6 +33,9 @@ services:
     volumes:
       - pg_logs:/var/log/
     container_name: "${BOT}"
+    networks:
+      my_static_network:
+        ipv4_address: 172.28.0.3
 
   db:
     image: db_image
@@ -40,17 +46,22 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - DB_REPL_USER=${DB_REPL_USER}
-      - DB_REPL_HOST=${DB_REPL_HOST}.my_network
+      - DB_REPL_HOST=${DB_REPL_HOST}
       - DB_REPL_PASSWORD=${DB_REPL_PASSWORD}
     volumes:
       - pg_logs:/var/log/
     container_name: "${DB_HOST}"
+    networks:
+      my_static_network:
+        ipv4_address: 172.28.0.4
 
 volumes:
   pg_logs:
   pg_data:
 
 networks:
-  default:
-    external: true
-    name: my_network
+  my_static_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
